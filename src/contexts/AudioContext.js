@@ -65,3 +65,5 @@ export const AudioProvider = ({ children }) => {
         </AudioContext.Provider>
     );
 };
+
+export const useAudio = () => useContext(AudioContext);
