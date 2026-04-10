@@ -1,3 +1,5 @@
+import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+
 export const AudioProvider = ({ children }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentSongIndex, setCurrentSongIndex] = useState(0);
