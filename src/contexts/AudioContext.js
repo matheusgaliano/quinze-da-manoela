@@ -1,23 +1,23 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 
+const AudioContext = createContext();
+
 export const AudioProvider = ({ children }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentSongIndex, setCurrentSongIndex] = useState(0);
-    const [volume, setVolume] = useState(0.5); // Inicia em 50%
+    const [volume, setVolume] = useState(0.5);
 
     const playlist = [
         { id: 1, title: "Way Back Home - Hannah Montana", url: '/assets/musica1.mp3' },
         { id: 2, title: "Quinze - Larissa Manoela", url: '/assets/musica2.mp3' }
     ];
 
-    // Usamos o useRef para o áudio não reiniciar toda vez que o componente renderizar
-    const audioRef = useRef(new Audio(playlist[0].url));
+    const audioRef = useRef(null);
 
-    // Sincroniza o volume do objeto de áudio com o estado inicial
+    // Inicializa o áudio apenas uma vez
     useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = volume;
-        }
+        audioRef.current = new Audio(playlist[0].url);
+        audioRef.current.volume = volume;
     }, []);
 
     const handleVolumeChange = (newVolume) => {
@@ -29,26 +29,25 @@ export const AudioProvider = ({ children }) => {
     };
 
     const nextSong = () => {
-        // Calcula o próximo índice (se chegar no fim, volta para a primeira)
         const nextIndex = (currentSongIndex + 1) % playlist.length;
         setCurrentSongIndex(nextIndex);
-
-        // Atualiza a fonte do áudio
-        audioRef.current.src = playlist[nextIndex].url;
-        audioRef.current.volume = volume;
-
-        // Se já estava tocando, continua tocando a nova música
-        if (isPlaying) {
-            audioRef.current.play().catch(err => console.error("Erro ao tocar:", err));
+        if (audioRef.current) {
+            audioRef.current.src = playlist[nextIndex].url;
+            audioRef.current.volume = volume;
+            if (isPlaying) {
+                audioRef.current.play().catch(err => console.error(err));
+            }
         }
     };
 
     const togglePlay = () => {
+        if (!audioRef.current) return;
+
         if (isPlaying) {
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
-            audioRef.current.play().catch(err => console.error("Erro ao tocar:", err));
+            audioRef.current.play().catch(err => console.error(err));
             setIsPlaying(true);
         }
     };
@@ -68,4 +67,10 @@ export const AudioProvider = ({ children }) => {
     );
 };
 
-export const useAudio = () => useContext(AudioContext);
+export const useAudio = () => {
+    const context = useContext(AudioContext);
+    if (!context) {
+        throw new Error('useAudio deve ser usado dentro de um AudioProvider');
+    }
+    return context;
+};
