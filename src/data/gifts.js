@@ -4,7 +4,7 @@ export const gifts = [
         title: "Passeio de Balão",
         description: "Uma experiência inesquecível vendo o mundo do alto.",
         price: 150.00,
-        image: "https://images.unsplash.com/photo-1507608158173-1dcec673a2e5?w=500" // Imagem temporária
+        image: "https://images.unsplash.com/photo-1507608158173-1dcec673a2e5?w=500"
     },
     {
         id: 2,

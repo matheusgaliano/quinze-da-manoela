@@ -11,7 +11,6 @@ export const AudioProvider = ({ children }) => {
         { id: 2, title: 'Música 2', url: '/assets/musica2.mp3' }
     ];
 
-    // IMPORTANTE: Garantir que o áudio comece com a URL da primeira música
     const audioRef = useRef(new Audio(playlist[0].url));
 
     const togglePlay = () => {
@@ -42,7 +41,7 @@ export const AudioProvider = ({ children }) => {
         <AudioContext.Provider value={{
             isPlaying,
             togglePlay,
-            currentSong: playlist[currentSongIndex], // Entrega a música atual
+            currentSong: playlist[currentSongIndex],
             playlist
         }}>
             {children}
