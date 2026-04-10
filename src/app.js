@@ -5,6 +5,8 @@ import { AudioProvider, useAudio } from './contexts/AudioContext';
 import Player from './components/Player';
 import GiftCard from './components/GiftCard';
 import WelcomeModal from './components/WelcomeModal';
+// Importamos o novo componente que você vai criar agora
+import AdminMessages from './components/AdminMessages';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -70,10 +72,38 @@ function MainContent() {
 }
 
 function App() {
+    const [isAdmin, setIsAdmin] = useState(false);
+
     return (
         <AudioProvider>
             <GlobalStyle />
-            <MainContent />
+
+            {isAdmin ? (
+                /* Se estiver logado, mostra as mensagens */
+                <AdminMessages onBack={() => setIsAdmin(false)} />
+            ) : (
+                /* Se não, mostra o site normal */
+                <>
+                    <MainContent />
+
+                    {/* Botão Secreto no rodapé */}
+                    <footer
+                        onClick={() => {
+                            const pass = prompt("Chave de acesso da Manu:");
+                            if (pass === "manu15") setIsAdmin(true);
+                        }}
+                        style={{
+                            textAlign: 'center',
+                            padding: '40px',
+                            cursor: 'pointer',
+                            opacity: 0.1, // Quase invisível
+                            fontSize: '10px'
+                        }}
+                    >
+                        .
+                    </footer>
+                </>
+            )}
         </AudioProvider>
     );
 }
