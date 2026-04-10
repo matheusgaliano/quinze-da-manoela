@@ -35,28 +35,63 @@ const SongInfo = styled.span`
   font-size: 12px;
   color: #666;
   margin-right: 5px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const VolumeContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  input {
+    width: 60px;
+    cursor: pointer;
+    accent-color: var(--primary);
+  }
 `;
 
 export default function Player() {
-    const { isPlaying, togglePlay, currentSong, nextSong } = useAudio();
+    // Importando as novas funções que adicionamos no AudioContext
+    const {
+        isPlaying,
+        togglePlay,
+        currentSong,
+        nextSong,
+        volume,
+        handleVolumeChange
+    } = useAudio();
 
     if (!currentSong) return null;
 
     return (
         <PlayerContainer>
+            {/* O título agora muda sozinho quando você clica em Próxima */}
             <SongInfo>{currentSong.title}</SongInfo>
 
-            <ControlButton onClick={togglePlay}>
+            <ControlButton onClick={togglePlay} title={isPlaying ? "Pausar" : "Tocar"}>
                 {isPlaying ? <Pause size={18} /> : <Play size={18} />}
             </ControlButton>
 
-            <ControlButton onClick={nextSong}>
+            {/* Botão de próxima música conectado */}
+            <ControlButton onClick={nextSong} title="Próxima música">
                 <SkipForward size={18} />
             </ControlButton>
 
-            <ControlButton>
-                <Volume2 size={18} />
-            </ControlButton>
+            {/* Controle de Volume Funcional */}
+            <VolumeContainer>
+                <Volume2 size={18} color="#666" />
+                <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={(e) => handleVolumeChange(e.target.value)}
+                />
+            </VolumeContainer>
         </PlayerContainer>
     );
 }
