@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { supabase } from '../lib/supabase';
 import { loadStripe } from '@stripe/stripe-js';
 
-
+// Inicializa o Stripe com a sua chave pública
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const Overlay = styled.div`
@@ -44,7 +43,7 @@ const TextArea = styled.textarea`
 
 const SubmitButton = styled.button`
   width: 100%;
-  background: var(--accent);
+  background: var(--accent, #A57C4B);
   color: white;
   border: none;
   padding: 15px;
@@ -53,9 +52,8 @@ const SubmitButton = styled.button`
   font-weight: bold;
   margin-top: 10px;
 
-  &:hover { background: var(--accent-dark); }
-
-  &:disabled { background: #A57C4B; }
+  &:hover { background: var(--accent-dark, #8a653d); }
+  &:disabled { background: #ccc; cursor: not-allowed; }
 `;
 
 export default function GiftModal({ gift, onClose }) {
@@ -67,26 +65,8 @@ export default function GiftModal({ gift, onClose }) {
         e.preventDefault();
         setLoading(true);
 
-        // Salvar no Supabase
-        const { error: supabaseError } = await supabase
-            .from('presentes_recebidos')
-            .insert([
-                {
-                    nome_convidado: nome,
-                    presente_id: gift.id,
-                    valor: gift.price,
-                    mensagem: mensagem
-                }
-            ]);
-
-        if (supabaseError) {
-            alert("Erro ao salvar recado: " + supabaseError.message);
-            setLoading(false);
-            return;
-        }
-
-        // Lógica do Stripe
         try {
+            // Chamada para a sua API Route na Vercel
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -94,25 +74,31 @@ export default function GiftModal({ gift, onClose }) {
                     title: gift.title,
                     price: gift.price,
                     guestName: nome,
+                    message: mensagem, // Enviando a mensagem para o backend salvar
+                    giftId: gift.id
                 }),
             });
 
-            const session = await response.json();
+            const data = await response.json();
 
-            if (!session.id) {
-                throw new Error("Não foi possível gerar a sessão de pagamento.");
+            // Se o backend retornar erro (ex: Erro 500), cai aqui
+            if (!response.ok || !data.id) {
+                throw new Error(data.error || "Não foi possível gerar a sessão de pagamento.");
             }
 
+            // Inicia o redirecionamento oficial do Stripe
             const stripe = await stripePromise;
             const { error: stripeError } = await stripe.redirectToCheckout({
-                sessionId: session.id,
+                sessionId: data.id,
             });
 
             if (stripeError) {
-                alert(stripeError.message);
+                throw new Error(stripeError.message);
             }
+
         } catch (err) {
-            alert("Erro no pagamento: " + err.message);
+            console.error("Erro no fluxo de pagamento:", err);
+            alert("Erro: " + err.message);
         } finally {
             setLoading(false);
         }
@@ -139,7 +125,13 @@ export default function GiftModal({ gift, onClose }) {
                     <SubmitButton type="submit" disabled={loading}>
                         {loading ? "Redirecionando..." : "Confirmar e Ir para Pagamento"}
                     </SubmitButton>
-                    <button type="button" onClick={onClose} style={{ width: '100%', background: 'none', border: 'none', marginTop: '10px', cursor: 'pointer', color: '#999' }}>Cancelar</button>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        style={{ width: '100%', background: 'none', border: 'none', marginTop: '10px', cursor: 'pointer', color: '#999' }}
+                    >
+                        Cancelar
+                    </button>
                 </form>
             </ModalContent>
         </Overlay>
