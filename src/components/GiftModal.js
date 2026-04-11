@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { loadStripe } from '@stripe/stripe-js';
 
-// Inicializa o Stripe com a sua chave pública
+// Inicializa o Stripe com a sua chave pública (pk_live)
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const Overlay = styled.div`
@@ -74,32 +74,25 @@ export default function GiftModal({ gift, onClose }) {
                     title: gift.title,
                     price: gift.price,
                     guestName: nome,
-                    message: mensagem, // Enviando a mensagem para o backend salvar
+                    message: mensagem,
                     giftId: gift.id
                 }),
             });
 
             const data = await response.json();
 
-            // Se o backend retornar erro (ex: Erro 500), cai aqui
-            if (!response.ok || !data.id) {
-                throw new Error(data.error || "Não foi possível gerar a sessão de pagamento.");
+            // Verificação atualizada: Checamos se a URL de checkout existe na resposta
+            if (!response.ok || !data.url) {
+                throw new Error(data.error || "Erro ao gerar link de pagamento.");
             }
 
-            // Inicia o redirecionamento oficial do Stripe
-            const stripe = await stripePromise;
-            const { error: stripeError } = await stripe.redirectToCheckout({
-                sessionId: data.id,
-            });
-
-            if (stripeError) {
-                throw new Error(stripeError.message);
-            }
+            // MODO DE PRODUÇÃO: Redirecionamento direto para a URL do Stripe
+            // Isso resolve o erro "redirectToCheckout is no longer supported"
+            window.location.href = data.url;
 
         } catch (err) {
             console.error("Erro no fluxo de pagamento:", err);
             alert("Erro: " + err.message);
-        } finally {
             setLoading(false);
         }
     };

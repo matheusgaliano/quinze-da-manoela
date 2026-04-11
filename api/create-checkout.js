@@ -67,8 +67,7 @@ export default async function handler(req, res) {
         });
 
         // Retorno do ID da sessão para o frontend
-        return res.status(200).json({ id: session.id });
-
+        return res.status(200).json(session);
     } catch (err) {
         console.error("ERRO NO CHECKOUT:", err.message);
         // Retornamos a mensagem exata para que o seu alert no frontend mostre o que o Stripe barrou
