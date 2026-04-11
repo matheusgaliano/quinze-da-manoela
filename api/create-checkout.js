@@ -16,19 +16,20 @@ export default async function handler(req, res) {
     try {
         const { title, price, guestName, message, giftId } = req.body;
 
-        // Validação de segurança: Se o preço for 0 ou inválido, o Stripe rejeita.
-        const unitAmount = Math.round(parseFloat(price) * 100);
+        // Validação de segurança: Math.abs garante número positivo e Math.round evita decimais que o Stripe rejeita
+        const unitAmount = Math.abs(Math.round(parseFloat(price) * 100));
+
         if (!unitAmount || unitAmount <= 0) {
-            throw new Error("Valor do presente inválido para o pagamento.");
+            throw new Error("O valor do presente precisa ser maior que zero.");
         }
 
-        // 1. Salva no banco (Já sabemos que está funcionando!)
+        // 1. Salva no banco (Já sabemos que está funcionando pelo seu log!)
         const { error: dbError } = await supabase
             .from('presentes_recebidos')
             .insert([
                 {
-                    nome_convidado: guestName,
-                    mensagem: message,
+                    nome_convidado: guestName || 'Convidado',
+                    mensagem: message || '',
                     presente_id: parseInt(giftId),
                     valor: parseFloat(price),
                     status_pagamento: 'pendente'
@@ -37,12 +38,9 @@ export default async function handler(req, res) {
 
         if (dbError) {
             console.error("Erro Supabase:", dbError.message);
-            // Seguimos mesmo com erro no banco para não perder a venda, 
-            // mas aqui o ideal é que o banco já esteja ok como vimos no print.
         }
 
-        // 2. Cria a sessão do Stripe
-        // Adicionamos metadados para você saber quem pagou lá no painel do Stripe
+        // 2. Cria a sessão do Stripe com tratativas para campos vazios
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card', 'pix'],
             line_items: [
@@ -50,8 +48,9 @@ export default async function handler(req, res) {
                     price_data: {
                         currency: 'brl',
                         product_data: {
-                            name: `Presente: ${title}`,
-                            description: `Recado de: ${guestName}`,
+                            // O Stripe pode dar erro 500 se o nome for uma string vazia
+                            name: `Presente: ${title || 'Contribuição'}`,
+                            description: `De: ${guestName || 'Amigo(a)'}`,
                         },
                         unit_amount: unitAmount,
                     },
@@ -62,17 +61,17 @@ export default async function handler(req, res) {
             success_url: `${req.headers.origin}/sucesso`,
             cancel_url: `${req.headers.origin}/cancelado`,
             metadata: {
-                guestName: guestName,
-                giftId: giftId
+                guestName: guestName || 'Anônimo',
+                giftId: giftId ? giftId.toString() : '0'
             }
         });
 
-        // Retorno do ID da sessão para o frontend fazer o redirecionamento
+        // Retorno do ID da sessão para o frontend
         return res.status(200).json({ id: session.id });
 
     } catch (err) {
         console.error("ERRO NO CHECKOUT:", err.message);
-        // Enviamos a mensagem real do erro para o seu alert do frontend
+        // Retornamos a mensagem exata para que o seu alert no frontend mostre o que o Stripe barrou
         return res.status(500).json({ error: err.message });
     }
 }
