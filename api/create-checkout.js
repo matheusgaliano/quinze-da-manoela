@@ -42,7 +42,7 @@ export default async function handler(req, res) {
 
         // 2. Cria a sessão do Stripe com tratativas para campos vazios
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
+            payment_method_types: ['card', 'pix'],
             line_items: [
                 {
                     price_data: {
