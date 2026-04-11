@@ -14,10 +14,20 @@ export const AudioProvider = ({ children }) => {
 
     const audioRef = useRef(null);
 
-    // Inicializa o áudio apenas uma vez
+    // Inicializa o objeto de áudio apenas uma vez no carregamento
     useEffect(() => {
-        audioRef.current = new Audio(playlist[0].url);
+        audioRef.current = new Audio(playlist[currentSongIndex].url);
         audioRef.current.volume = volume;
+
+        // Listener para mudar de música automaticamente quando uma acabar
+        audioRef.current.onended = () => nextSong();
+
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
     }, []);
 
     const handleVolumeChange = (newVolume) => {
@@ -35,7 +45,7 @@ export const AudioProvider = ({ children }) => {
             audioRef.current.src = playlist[nextIndex].url;
             audioRef.current.volume = volume;
             if (isPlaying) {
-                audioRef.current.play().catch(err => console.error(err));
+                audioRef.current.play().catch(err => console.error("Erro ao tocar próxima:", err));
             }
         }
     };
@@ -47,8 +57,9 @@ export const AudioProvider = ({ children }) => {
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
-            audioRef.current.play().catch(err => console.error(err));
-            setIsPlaying(true);
+            audioRef.current.play()
+                .then(() => setIsPlaying(true))
+                .catch(err => console.error("Erro ao dar play:", err));
         }
     };
 

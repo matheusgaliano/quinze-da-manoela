@@ -1,19 +1,18 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-// Precisamos importar o supabase para salvar a mensagem
 import { createClient } from '@supabase/supabase-js';
 
+// Usando os nomes exatos das suas variáveis na Vercel
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY // Use a Service Role para permissão de escrita na API
+    process.env.REACT_APP_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 export default async function handler(req, res) {
     if (req.method === 'POST') {
         try {
-            // Pegando a mensagem que o convidado escreveu
             const { title, price, guestName, message, giftId } = req.body;
 
-            // 1. Salva no banco de dados primeiro
+            // 1. Salva na tabela presentes_recebidos usando a service_role
             const { error: dbError } = await supabase
                 .from('presentes_recebidos')
                 .insert([
@@ -22,13 +21,16 @@ export default async function handler(req, res) {
                         mensagem: message,
                         presente_id: giftId,
                         valor: price,
-                        status_pagamento: 'pendente' // Começa como pendente
+                        status_pagamento: 'pendente'
                     }
                 ]);
 
-            if (dbError) throw new Error("Erro ao salvar no banco: " + dbError.message);
+            if (dbError) {
+                console.error("Erro Supabase:", dbError);
+                throw new Error("Erro ao salvar mensagem no banco.");
+            }
 
-            // 2. Cria a sessão no Stripe
+            // 2. Cria a sessão do Stripe
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card', 'pix'],
                 line_items: [
@@ -39,7 +41,7 @@ export default async function handler(req, res) {
                                 name: `Presente: ${title}`,
                                 description: `De: ${guestName}`,
                             },
-                            unit_amount: Math.round(price * 100), // Usando Math.round para evitar erros de centavos
+                            unit_amount: Math.round(price * 100),
                         },
                         quantity: 1,
                     },
@@ -51,7 +53,7 @@ export default async function handler(req, res) {
 
             res.status(200).json({ id: session.id });
         } catch (err) {
-            console.error(err);
+            console.error("Erro Geral no Handler:", err.message);
             res.status(500).json({ error: err.message });
         }
     } else {
