@@ -40,12 +40,12 @@ const Title = styled.h3`
 
 const Price = styled.p`
   font-weight: bold;
-  color: var(--accent);
+  color: var(--accent, #A57C4B);
   margin-bottom: 15px;
 `;
 
 const Button = styled.button`
-  background-color: var(--accent-dark);
+  background-color: #A57C4B;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -55,11 +55,11 @@ const Button = styled.button`
   transition: background 0.3s;
   
   &:hover {
-    background-color: var(--accent);
+    background-color: #8a653d;
   }
 `;
 
-export default function GiftCard({ gift }) {
+export default function GiftCard({ gift, onAddToCart }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
@@ -80,6 +80,8 @@ export default function GiftCard({ gift }) {
                 <GiftModal
                     gift={gift}
                     onClose={() => setIsModalOpen(false)}
+                    // Passamos a função que veio do App.js para dentro do GiftModal
+                    onAddToCart={onAddToCart}
                 />
             )}
         </>
