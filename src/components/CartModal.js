@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
-// Verifique se esses componentes estão importados ou definidos no seu arquivo
-// import { Overlay, ModalContent, Input, TextArea, SubmitButton } from './SeusEstilos';
-
 export default function CartModal({ itens, onClose }) {
     const [nome, setNome] = useState('');
     const [mensagem, setMensagem] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Soma o total de todos os itens no carrinho
     const totalGeral = itens.reduce((acc, item) => acc + (item.price * item.quantidade), 0);
 
     const finalizarPresente = async () => {
         if (!nome.trim()) {
-            alert("Por favor, coloque seu nome para a Manu saber quem deu o presente!");
+            alert("Por favor, preencha seu nome.");
             return;
         }
 
@@ -29,80 +25,63 @@ export default function CartModal({ itens, onClose }) {
         try {
             const response = await fetch('/api/avisar-manu', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json' // Importante para a API ler o body corretamente
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)
             });
 
             if (response.ok) {
-                alert("Obrigado! A Manu já foi avisada do seu presente via WhatsApp.");
+                alert("Sucesso! A Manu foi avisada. Não esqueça de concluir o Pix!");
                 onClose();
             } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Erro ao avisar a Manu");
+                const errData = await response.json();
+                throw new Error(errData.error || "Erro na API");
             }
         } catch (err) {
-            console.error("Erro no checkout:", err);
-            alert("Erro: " + err.message);
+            alert("Erro ao avisar: " + err.message);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Overlay onClick={onClose}>
-            <ModalContent onClick={e => e.stopPropagation()}>
-                <h3 style={{ marginBottom: '10px' }}>Finalizar Presente 🎁</h3>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+            <div style={{ background: 'white', padding: '25px', borderRadius: '20px', width: '90%', maxWidth: '400px', textAlign: 'center' }}>
+                <h3>Finalizar Presente 🎁</h3>
+                <p>Total: <strong>R$ {totalGeral.toFixed(2)}</strong></p>
 
-                {/* Resumo rápido dos itens para o convidado conferir */}
-                <div style={{ fontSize: '0.9rem', marginBottom: '15px', textAlign: 'left', borderBottom: '1px solid #eee', pb: '10px' }}>
-                    <strong>Total: R$ {totalGeral.toFixed(2)}</strong>
-                </div>
-
-                <div style={{ textAlign: 'center', margin: '15px 0' }}>
-                    <p style={{ fontSize: '0.9rem', marginBottom: '5px' }}><strong>1. Escaneie o QR Code:</strong></p>
-                    {/* Removido o /public/ pois o Next/Vercel serve a pasta public na raiz / */}
-                    <img src="/pix-qrcode.jpeg" alt="QR Code Pix" style={{ width: '180px', borderRadius: '8px' }} />
-
-                    <p style={{ marginTop: '15px', fontSize: '0.9rem', marginBottom: '5px' }}><strong>2. Ou copie a Chave Pix:</strong></p>
+                <div style={{ margin: '20px 0' }}>
+                    <p style={{ fontSize: '14px' }}>1. Pague via Pix:</p>
+                    <img src="/pix-qrcode.jpeg" alt="Pix" style={{ width: '150px', margin: '10px 0' }} />
                     <div
-                        style={{ background: '#f0f0f0', padding: '12px', borderRadius: '8px', cursor: 'pointer' }}
-                        onClick={() => {
-                            navigator.clipboard.writeText('55999810295');
-                            alert("Chave Pix copiada!");
-                        }}
-                        title="Clique para copiar"
+                        onClick={() => { navigator.clipboard.writeText('55999810295'); alert('Copiado!'); }}
+                        style={{ background: '#eee', padding: '10px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }}
                     >
-                        <code style={{ fontSize: '1.1rem', color: '#333' }}>55999810295</code>
-                        <div style={{ fontSize: '0.7rem', color: '#888', marginTop: '5px' }}>(Clique para copiar)</div>
+                        Chave: 55999810295 (Clique para copiar)
                     </div>
                 </div>
 
-                <Input
+                <input
+                    style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                     placeholder="Seu nome"
                     value={nome}
                     onChange={e => setNome(e.target.value)}
-                    style={{ marginBottom: '10px' }}
                 />
-                <TextArea
-                    placeholder="Mensagem carinhosa para a Manu..."
+                <textarea
+                    style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border: '1px solid #ddd', height: '60px' }}
+                    placeholder="Recado final..."
                     value={mensagem}
                     onChange={e => setMensagem(e.target.value)}
-                    style={{ marginBottom: '15px', height: '80px' }}
                 />
 
-                <SubmitButton onClick={finalizarPresente} disabled={loading}>
-                    {loading ? "Enviando aviso..." : "ENVIAR MENSAGEM E FINALIZAR"}
-                </SubmitButton>
-
                 <button
-                    onClick={onClose}
-                    style={{ background: 'none', border: 'none', color: '#888', marginTop: '10px', cursor: 'pointer', fontSize: '0.8rem' }}
+                    onClick={finalizarPresente}
+                    disabled={loading}
+                    style={{ width: '100%', padding: '15px', background: '#A57C4B', color: 'white', border: 'none', borderRadius: '30px', fontWeight: 'bold', cursor: 'pointer' }}
                 >
-                    Voltar e escolher mais
+                    {loading ? "Enviando..." : "JÁ FIZ O PIX, AVISAR MANU"}
                 </button>
-            </ModalContent>
-        </Overlay>
+                <button onClick={onClose} style={{ marginTop: '10px', background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}>Voltar</button>
+            </div>
+        </div>
     );
 }

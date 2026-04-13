@@ -5,13 +5,33 @@ import { AudioProvider, useAudio } from './contexts/AudioContext';
 import Player from './components/Player';
 import GiftCard from './components/GiftCard';
 import WelcomeModal from './components/WelcomeModal';
-// Importamos o novo componente que você vai criar agora
 import AdminMessages from './components/AdminMessages';
+import CartModal from './components/CartModal'; // Importando o modal do Pix
 
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 60px 20px;
+`;
+
+const CartFloatingButton = styled.button`
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #A57C4B;
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 900;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &:hover { background: #8a653d; }
 `;
 
 const gifts = [
@@ -33,11 +53,25 @@ const gifts = [
 
 function MainContent() {
     const [showWelcome, setShowWelcome] = useState(true);
+    const [cart, setCart] = useState([]); // Itens escolhidos
+    const [isCartOpen, setIsCartOpen] = useState(false); // Controle do modal
     const { togglePlay } = useAudio();
 
     const handleAccept = () => {
         togglePlay();
         setShowWelcome(false);
+    };
+
+    const adicionarAoCarrinho = (item) => {
+        setCart(prev => {
+            // Se o item já estiver lá, só aumenta a quantidade
+            const existe = prev.find(i => i.id === item.id);
+            if (existe) {
+                return prev.map(i => i.id === item.id ? { ...i, quantidade: i.quantidade + 1 } : i);
+            }
+            return [...prev, { ...item, quantidade: 1 }];
+        });
+        alert(`${item.title} adicionado ao carrinho!`);
     };
 
     return (
@@ -54,19 +88,40 @@ function MainContent() {
             <Container>
                 <h2 style={{
                     fontWeight: '250',
-                    fontSize: '5rem',
+                    fontSize: '3.5rem',
                     color: 'var(--secondary-dark)',
                     textAlign: 'center',
-                    marginBottom: '60px'
+                    marginBottom: '60px',
+                    fontFamily: 'Montserrat'
                 }}>
                     Lista de Presentes da Manoela
                 </h2>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
                     {gifts.map(gift => (
-                        <GiftCard key={gift.id} gift={gift} />
+                        <GiftCard
+                            key={gift.id}
+                            gift={gift}
+                            onAddToCart={() => adicionarAoCarrinho(gift)}
+                        />
                     ))}
                 </div>
             </Container>
+
+            {/* Botão flutuante que aparece quando tem algo no carrinho */}
+            {cart.length > 0 && (
+                <CartFloatingButton onClick={() => setIsCartOpen(true)}>
+                    🛒 Ver Carrinho ({cart.length})
+                </CartFloatingButton>
+            )}
+
+            {/* Modal do Pix/Checkout */}
+            {isCartOpen && (
+                <CartModal
+                    itens={cart}
+                    onClose={() => setIsCartOpen(false)}
+                />
+            )}
         </>
     );
 }
@@ -79,14 +134,11 @@ function App() {
             <GlobalStyle />
 
             {isAdmin ? (
-                /* Se estiver logado, mostra as mensagens */
                 <AdminMessages onBack={() => setIsAdmin(false)} />
             ) : (
-                /* Se não, mostra o site normal */
                 <>
                     <MainContent />
 
-                    {/* Botão Secreto no rodapé */}
                     <footer
                         onClick={() => {
                             const pass = prompt("Chave de acesso da Manu:");
@@ -96,7 +148,7 @@ function App() {
                             textAlign: 'center',
                             padding: '40px',
                             cursor: 'pointer',
-                            opacity: 0.1, // Quase invisível
+                            opacity: 0.1,
                             fontSize: '10px'
                         }}
                     >
