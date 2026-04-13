@@ -99,7 +99,7 @@ export default function WelcomeModal({ onAccept, onDecline }) {
                 <Content>
                     <Title>Bem-vindo à lista de presentes dos meus 15 anos.</Title>
                     <p><i>Célébrer mes 15 ans à Paris</i></p>
-                    <p>Gostaria de acompanhar sua visita com a trilha sonora especial da Mano?</p>
+                    <p>Gostaria de acompanhar sua visita com a trilha sonora especial da Manoela?</p>
                     <ButtonGroup>
                         <ActionButton className="yes" onClick={onAccept}>
                             Sim, tocar música! 🎵

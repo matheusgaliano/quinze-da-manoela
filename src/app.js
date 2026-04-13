@@ -90,7 +90,7 @@ function App() {
                     <footer
                         onClick={() => {
                             const pass = prompt("Chave de acesso da Manu:");
-                            if (pass === "manu15") setIsAdmin(true);
+                            if (pass === "mano15") setIsAdmin(true);
                         }}
                         style={{
                             textAlign: 'center',
