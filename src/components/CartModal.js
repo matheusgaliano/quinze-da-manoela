@@ -1,12 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 const Overlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(0,0,0,0.7);
   display: flex;
   justify-content: center;
@@ -20,7 +17,7 @@ const Modal = styled.div`
   border-radius: 25px;
   width: 95%;
   max-width: 500px;
-  max-height: 90vh;
+  max-height: 95vh; // Aumentado para caber o QR Code
   overflow-y: auto;
   position: relative;
 `;
@@ -29,7 +26,7 @@ const ItemRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #eee;
 `;
 
@@ -37,117 +34,111 @@ const QtyControls = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  
   button {
-    background: #f0f0f0;
-    border: none;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    &:hover { background: #e0e0e0; }
+    background: #f0f0f0; border: none; width: 28px; height: 28px;
+    border-radius: 50%; cursor: pointer; font-weight: bold;
   }
 `;
 
-const RemoveButton = styled.button`
-  background: none;
-  border: none;
-  color: #ff4d4d;
-  cursor: pointer;
-  font-size: 0.8rem;
-  margin-top: 5px;
-  text-decoration: underline;
+const Input = styled.input`
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 10px;
 `;
 
-const TotalSection = styled.div`
-  margin: 20px 0;
-  padding: 20px;
-  background: #f9f9f9;
-  border-radius: 15px;
-  text-align: center;
-  
-  h3 { color: #A57C4B; font-size: 1.5rem; }
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  height: 80px;
 `;
 
 const Button = styled.button`
-  background-color: #25d366; // Cor do WhatsApp
-  color: white;
-  border: none;
-  padding: 15px;
-  border-radius: 50px;
-  width: 100%;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
+  background-color: ${props => props.color || '#A57C4B'};
+  color: white; border: none; padding: 15px;
+  border-radius: 50px; width: 100%; font-weight: bold;
+  cursor: pointer; margin-top: 15px;
+`;
+
+const QRCodeImg = styled.img`
+  width: 200px;
+  height: 200px;
+  display: block;
+  margin: 15px auto;
 `;
 
 export default function CartModal({ itens, onClose, onUpdateCart }) {
-    // onUpdateCart é uma função que vamos passar do App.js para atualizar o estado global
+    const [etapa, setEtapa] = useState(1); // 1: Carrinho, 2: Checkout
+    const [nome, setNome] = useState('');
+    const [recado, setRecado] = useState('');
 
     const total = itens.reduce((acc, item) => acc + (item.price * item.quantidade), 0);
 
-    const alterarQuantidade = (id, delta) => {
-        const novosItens = itens.map(item => {
-            if (item.id === id) {
-                const novaQty = Math.max(1, item.quantidade + delta);
-                return { ...item, quantidade: novaQty };
-            }
-            return item;
-        });
-        onUpdateCart(novosItens);
+    const handleWhatsApp = () => {
+        if (!nome) return alert("Por favor, coloque seu nome.");
+
+        const listaPresentes = itens.map(i => `${i.quantidade}x ${i.title}`).join(', ');
+        const mensagem = `Olá Manu! Sou ${nome}. Estou enviando: ${listaPresentes}. Total: R$ ${total.toFixed(2)}. Mensagem: ${recado}`;
+
+        // Abre na mesma aba para evitar problemas de pop-up se desejar, 
+        // ou use _blank mas garanta que o fluxo foi concluído.
+        window.location.href = `https://wa.me/55999810295?text=${encodeURIComponent(mensagem)}`;
     };
 
-    const removerItem = (id) => {
-        const novosItens = itens.filter(item => item.id !== id);
-        onUpdateCart(novosItens);
-        if (novosItens.length === 0) onClose();
-    };
+    if (etapa === 1) {
+        return (
+            <Overlay onClick={onClose}>
+                <Modal onClick={e => e.stopPropagation()}>
+                    <h2 style={{ textAlign: 'center' }}>Seu Carrinho 🎁</h2>
+                    {itens.map(item => (
+                        <ItemRow key={item.id}>
+                            <div>
+                                <strong>{item.title}</strong><br />
+                                <small>R$ {item.price.toFixed(2)}</small><br />
+                                <button onClick={() => onUpdateCart(itens.filter(i => i.id !== item.id))} style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', padding: 0 }}>Remover</button>
+                            </div>
+                            <QtyControls>
+                                <button onClick={() => onUpdateCart(itens.map(i => i.id === item.id ? { ...i, quantidade: Math.max(1, i.quantidade - 1) } : i))}>-</button>
+                                <span>{item.quantidade}</span>
+                                <button onClick={() => onUpdateCart(itens.map(i => i.id === item.id ? { ...i, quantidade: i.quantidade + 1 } : i))}>+</button>
+                            </QtyControls>
+                        </ItemRow>
+                    ))}
+                    <h3 style={{ textAlign: 'center', margin: '20px 0' }}>Total: R$ {total.toFixed(2)}</h3>
+                    <Button onClick={() => setEtapa(2)}>FINALIZAR PRESENTE</Button>
+                    <Button color="#999" onClick={onClose}>VOLTAR</Button>
+                </Modal>
+            </Overlay>
+        );
+    }
 
     return (
         <Overlay onClick={onClose}>
             <Modal onClick={e => e.stopPropagation()}>
-                <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Seu Carrinho 🎁</h2>
+                <h2 style={{ textAlign: 'center' }}>Finalizar Presente 🎁</h2>
+                <p style={{ textAlign: 'center' }}>Total: <strong>R$ {total.toFixed(2)}</strong></p>
 
-                {itens.map(item => (
-                    <ItemRow key={item.id}>
-                        <div style={{ flex: 1 }}>
-                            <strong style={{ display: 'block' }}>{item.title}</strong>
-                            <small>R$ {item.price.toFixed(2)} / un</small>
-                            <br />
-                            <RemoveButton onClick={() => removerItem(item.id)}>Remover</RemoveButton>
-                        </div>
+                <p style={{ textAlign: 'center', fontSize: '14px', marginBottom: '5px' }}>1. Pague via Pix:</p>
+                {/* Verifique se o nome da imagem está correto no seu projeto */}
+                <QRCodeImg src="/assets/qrcode.png" alt="QR Code Pix" />
 
-                        <QtyControls>
-                            <button onClick={() => alterarQuantidade(item.id, -1)}>-</button>
-                            <span>{item.quantidade}</span>
-                            <button onClick={() => alterarQuantidade(item.id, 1)}>+</button>
-                        </QtyControls>
-                    </ItemRow>
-                ))}
-
-                <TotalSection>
-                    <p>Total a pagar:</p>
-                    <h3>R$ {total.toFixed(2)}</h3>
-                </TotalSection>
-
-                <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: '0.9rem', color: '#666' }}>Chave Pix (Celular):</p>
-                    <strong style={{ fontSize: '1.1rem' }}>55999810295</strong>
+                <div style={{ background: '#eee', padding: '10px', borderRadius: '10px', textAlign: 'center', fontSize: '12px' }}>
+                    Chave: 55999810295 (Célular)
                 </div>
 
-                <Button onClick={() => window.open(`https://wa.me/55999810295?text=Olá Manu! Estou enviando um presente: ${itens.map(i => `${i.quantidade}x ${i.title}`).join(', ')}. Total: R$ ${total.toFixed(2)}`, '_blank')}>
+                <Input placeholder="Seu nome" value={nome} onChange={e => setNome(e.target.value)} />
+                <TextArea placeholder="Recado final..." value={recado} onChange={e => setRecado(e.target.value)} />
+
+                <Button color="#25d366" onClick={handleWhatsApp}>
                     JÁ FIZ O PIX, AVISAR MANU
                 </Button>
 
-                <button
-                    onClick={onClose}
-                    style={{ background: 'none', border: 'none', width: '100%', marginTop: '15px', cursor: 'pointer', color: '#999' }}
-                >
-                    Continuar Escolhendo
+                <button onClick={() => setEtapa(1)} style={{ background: 'none', border: 'none', width: '100%', marginTop: '10px', cursor: 'pointer', color: '#666' }}>
+                    Voltar para o carrinho
                 </button>
             </Modal>
         </Overlay>
