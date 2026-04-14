@@ -17,6 +17,14 @@ const PlayerContainer = styled.div`
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   border: 1px solid var(--primary);
   z-index: 1000;
+
+  @media (max-width: 768px) {
+    bottom: auto; /* Remove do rodapé */
+    top: 10px;    /* Fixa no topo com um pequeno recuo */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;   /* Ajusta a largura para não colar nas bordas */
+  }
 `;
 
 const ControlButton = styled.button`
