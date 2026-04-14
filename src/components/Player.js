@@ -6,7 +6,7 @@ import { useAudio } from '../contexts/AudioContext';
 const PlayerContainer = styled.div`
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  left: 20px;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   padding: 10px 20px;

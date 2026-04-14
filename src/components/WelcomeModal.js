@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-// Importando as imagens conforme os nomes que você passou
+// Importando as imagens
 import manuImg from '../assets/manu.jpeg';
 import manuTorreImg from '../assets/manu-torre.jpeg';
 
@@ -14,9 +14,16 @@ const Overlay = styled.div`
   justify-content: center;
   z-index: 2000;
   text-align: center;
+
+  /* Estilo para celular: Fundo com a foto da Manu */
+  @media (max-width: 768px) {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), 
+                      url(${manuImg});
+    background-size: cover;
+    background-position: center;
+  }
 `;
 
-// Novo container para organizar as fotos e o texto em colunas
 const FlexContainer = styled.div`
   display: flex;
   align-items: center;
@@ -36,9 +43,13 @@ const Content = styled.div`
   padding: 40px;
   max-width: 500px;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    color: white; /* Muda o texto para branco no celular para destacar sobre a foto */
+    padding: 20px;
+  }
 `;
 
-// Estilo para as fotos laterais
 const SideImage = styled.img`
   width: 100%;
   max-width: 280px;
@@ -48,7 +59,7 @@ const SideImage = styled.img`
   object-fit: cover;
 
   @media (max-width: 768px) {
-    display: none; /* Esconde no celular para não empilhar muita coisa */
+    display: none; /* Esconde no celular pois já estará no fundo */
   }
 `;
 
@@ -57,6 +68,11 @@ const Title = styled.h1`
   font-size: 2.5rem;
   color: var(--primary);
   margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    color: white; /* Garante que o título fique branco no celular */
+    font-size: 2rem;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -87,19 +103,27 @@ const ActionButton = styled.button`
   &:hover {
     opacity: 0.8;
   }
+
+  @media (max-width: 768px) {
+    padding: 15px 20px;
+    font-size: 0.9rem;
+  }
 `;
 
 export default function WelcomeModal({ onAccept, onDecline }) {
     return (
         <Overlay>
             <FlexContainer>
-                {/* Foto da Esquerda */}
+                {/* Foto da Esquerda (Desktop) */}
                 <SideImage src={manuImg} alt="Manu" />
 
                 <Content>
                     <Title>Bem-vindo à lista de presentes dos meus 15 anos.</Title>
                     <p><i>Célébrer mes 15 ans à Paris</i></p>
-                    <p>Gostaria de acompanhar sua visita com a trilha sonora especial da Manoela?</p>
+                    <p style={{ marginTop: '10px' }}>
+                        Gostaria de acompanhar sua visita com a trilha sonora especial da Manoela?
+                    </p>
+
                     <ButtonGroup>
                         <ActionButton className="yes" onClick={onAccept}>
                             Sim, tocar música! 🎵
@@ -110,7 +134,7 @@ export default function WelcomeModal({ onAccept, onDecline }) {
                     </ButtonGroup>
                 </Content>
 
-                {/* Foto da Direita */}
+                {/* Foto da Direita (Desktop) */}
                 <SideImage src={manuTorreImg} alt="Manu na Torre" />
             </FlexContainer>
         </Overlay>

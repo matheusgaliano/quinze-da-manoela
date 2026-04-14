@@ -1,87 +1,155 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 
-export default function CartModal({ itens, onClose }) {
-    const [nome, setNome] = useState('');
-    const [mensagem, setMensagem] = useState('');
-    const [loading, setLoading] = useState(false);
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+`;
 
-    const totalGeral = itens.reduce((acc, item) => acc + (item.price * item.quantidade), 0);
+const Modal = styled.div`
+  background: white;
+  padding: 30px;
+  border-radius: 25px;
+  width: 95%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+`;
 
-    const finalizarPresente = async () => {
-        if (!nome.trim()) {
-            alert("Por favor, preencha seu nome.");
-            return;
-        }
+const ItemRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-bottom: 1px solid #eee;
+`;
 
-        setLoading(true);
-        const dados = {
-            convidado: nome,
-            mensagem: mensagem,
-            itens: itens.map(i => `${i.quantidade}x ${i.title}`).join(', '),
-            total: totalGeral.toFixed(2)
-        };
+const QtyControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  button {
+    background: #f0f0f0;
+    border: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    &:hover { background: #e0e0e0; }
+  }
+`;
 
-        try {
-            const response = await fetch('/api/avisar-manu', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dados)
-            });
+const RemoveButton = styled.button`
+  background: none;
+  border: none;
+  color: #ff4d4d;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  text-decoration: underline;
+`;
 
-            if (response.ok) {
-                alert("Sucesso! A Manu foi avisada. Não esqueça de concluir o Pix!");
-                onClose();
-            } else {
-                const errData = await response.json();
-                throw new Error(errData.error || "Erro na API");
+const TotalSection = styled.div`
+  margin: 20px 0;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 15px;
+  text-align: center;
+  
+  h3 { color: #A57C4B; font-size: 1.5rem; }
+`;
+
+const Button = styled.button`
+  background-color: #25d366; // Cor do WhatsApp
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 50px;
+  width: 100%;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+`;
+
+export default function CartModal({ itens, onClose, onUpdateCart }) {
+    // onUpdateCart é uma função que vamos passar do App.js para atualizar o estado global
+
+    const total = itens.reduce((acc, item) => acc + (item.price * item.quantidade), 0);
+
+    const alterarQuantidade = (id, delta) => {
+        const novosItens = itens.map(item => {
+            if (item.id === id) {
+                const novaQty = Math.max(1, item.quantidade + delta);
+                return { ...item, quantidade: novaQty };
             }
-        } catch (err) {
-            alert("Erro ao avisar: " + err.message);
-        } finally {
-            setLoading(false);
-        }
+            return item;
+        });
+        onUpdateCart(novosItens);
+    };
+
+    const removerItem = (id) => {
+        const novosItens = itens.filter(item => item.id !== id);
+        onUpdateCart(novosItens);
+        if (novosItens.length === 0) onClose();
     };
 
     return (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
-            <div style={{ background: 'white', padding: '25px', borderRadius: '20px', width: '90%', maxWidth: '400px', textAlign: 'center' }}>
-                <h3>Finalizar Presente 🎁</h3>
-                <p>Total: <strong>R$ {totalGeral.toFixed(2)}</strong></p>
+        <Overlay onClick={onClose}>
+            <Modal onClick={e => e.stopPropagation()}>
+                <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Seu Carrinho 🎁</h2>
 
-                <div style={{ margin: '20px 0' }}>
-                    <p style={{ fontSize: '14px' }}>1. Pague via Pix:</p>
-                    <img src="/pix-qrcode.jpeg" alt="Pix" style={{ width: '150px', margin: '10px 0' }} />
-                    <div
-                        onClick={() => { navigator.clipboard.writeText('55999810295'); alert('Copiado!'); }}
-                        style={{ background: '#eee', padding: '10px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }}
-                    >
-                        Chave: 55999810295 (Clique para copiar)
-                    </div>
+                {itens.map(item => (
+                    <ItemRow key={item.id}>
+                        <div style={{ flex: 1 }}>
+                            <strong style={{ display: 'block' }}>{item.title}</strong>
+                            <small>R$ {item.price.toFixed(2)} / un</small>
+                            <br />
+                            <RemoveButton onClick={() => removerItem(item.id)}>Remover</RemoveButton>
+                        </div>
+
+                        <QtyControls>
+                            <button onClick={() => alterarQuantidade(item.id, -1)}>-</button>
+                            <span>{item.quantidade}</span>
+                            <button onClick={() => alterarQuantidade(item.id, 1)}>+</button>
+                        </QtyControls>
+                    </ItemRow>
+                ))}
+
+                <TotalSection>
+                    <p>Total a pagar:</p>
+                    <h3>R$ {total.toFixed(2)}</h3>
+                </TotalSection>
+
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: '0.9rem', color: '#666' }}>Chave Pix (Celular):</p>
+                    <strong style={{ fontSize: '1.1rem' }}>55999810295</strong>
                 </div>
 
-                <input
-                    style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                    placeholder="Seu nome"
-                    value={nome}
-                    onChange={e => setNome(e.target.value)}
-                />
-                <textarea
-                    style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border: '1px solid #ddd', height: '60px' }}
-                    placeholder="Recado final..."
-                    value={mensagem}
-                    onChange={e => setMensagem(e.target.value)}
-                />
+                <Button onClick={() => window.open(`https://wa.me/55999810295?text=Olá Manu! Estou enviando um presente: ${itens.map(i => `${i.quantidade}x ${i.title}`).join(', ')}. Total: R$ ${total.toFixed(2)}`, '_blank')}>
+                    JÁ FIZ O PIX, AVISAR MANU
+                </Button>
 
                 <button
-                    onClick={finalizarPresente}
-                    disabled={loading}
-                    style={{ width: '100%', padding: '15px', background: '#A57C4B', color: 'white', border: 'none', borderRadius: '30px', fontWeight: 'bold', cursor: 'pointer' }}
+                    onClick={onClose}
+                    style={{ background: 'none', border: 'none', width: '100%', marginTop: '15px', cursor: 'pointer', color: '#999' }}
                 >
-                    {loading ? "Enviando..." : "JÁ FIZ O PIX, AVISAR MANU"}
+                    Continuar Escolhendo
                 </button>
-                <button onClick={onClose} style={{ marginTop: '10px', background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}>Voltar</button>
-            </div>
-        </div>
+            </Modal>
+        </Overlay>
     );
 }

@@ -64,7 +64,6 @@ function MainContent() {
 
     const adicionarAoCarrinho = (item) => {
         setCart(prev => {
-            // Se o item já estiver lá, só aumenta a quantidade
             const existe = prev.find(i => i.id === item.id);
             if (existe) {
                 return prev.map(i => i.id === item.id ? { ...i, quantidade: i.quantidade + 1 } : i);
@@ -108,18 +107,17 @@ function MainContent() {
                 </div>
             </Container>
 
-            {/* Botão flutuante que aparece quando tem algo no carrinho */}
             {cart.length > 0 && (
                 <CartFloatingButton onClick={() => setIsCartOpen(true)}>
-                    🛒 Ver Carrinho ({cart.length})
+                    🛒 Ver Carrinho ({cart.reduce((total, item) => total + item.quantidade, 0)})
                 </CartFloatingButton>
             )}
 
-            {/* Modal do Pix/Checkout */}
             {isCartOpen && (
                 <CartModal
                     itens={cart}
                     onClose={() => setIsCartOpen(false)}
+                    onUpdateCart={(novosItens) => setCart(novosItens)} // ESSA LINHA PERMITE ATUALIZAR QTD E REMOVER
                 />
             )}
         </>
