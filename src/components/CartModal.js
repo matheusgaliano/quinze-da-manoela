@@ -124,7 +124,7 @@ export default function CartModal({ itens, onClose, onUpdateCart }) {
 
                 <p style={{ textAlign: 'center', fontSize: '14px', marginBottom: '5px' }}>1. Pague via Pix:</p>
                 {/* Verifique se o nome da imagem está correto no seu projeto */}
-                <QRCodeImg src="/public/pix-qrcode.jpeg" alt="QR Code Pix" />
+                <QRCodeImg src="/pix-qrcode.jpeg" alt="QR Code Pix" />
 
                 <div style={{ background: '#eee', padding: '10px', borderRadius: '10px', textAlign: 'center', fontSize: '12px' }}>
                     Chave: 55999810295 (Célular)
