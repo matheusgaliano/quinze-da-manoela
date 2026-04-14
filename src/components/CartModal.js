@@ -17,7 +17,7 @@ const Modal = styled.div`
   border-radius: 25px;
   width: 95%;
   max-width: 500px;
-  max-height: 95vh; // Aumentado para caber o QR Code
+  max-height: 95vh;
   overflow-y: auto;
   position: relative;
 `;
@@ -71,12 +71,40 @@ const QRCodeImg = styled.img`
   margin: 15px auto;
 `;
 
+// Estilo para a área da chave Pix clicável
+const PixKeyContainer = styled.div`
+  background: #f8f8f8;
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 10px 0;
+  border: 1px dashed #A57C4B;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f0f0f0;
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
 export default function CartModal({ itens, onClose, onUpdateCart }) {
     const [etapa, setEtapa] = useState(1); // 1: Carrinho, 2: Checkout
     const [nome, setNome] = useState('');
     const [recado, setRecado] = useState('');
 
+    const chavePix = "55999810295";
     const total = itens.reduce((acc, item) => acc + (item.price * item.quantidade), 0);
+
+    const handleCopyPix = () => {
+        navigator.clipboard.writeText(chavePix);
+        alert("Chave Pix copiada! Agora é só colar no seu banco. 📋");
+    };
 
     const handleWhatsApp = () => {
         if (!nome) return alert("Por favor, coloque seu nome.");
@@ -84,9 +112,7 @@ export default function CartModal({ itens, onClose, onUpdateCart }) {
         const listaPresentes = itens.map(i => `${i.quantidade}x ${i.title}`).join(', ');
         const mensagem = `Olá Manu! Sou ${nome}. Estou enviando: ${listaPresentes}. Total: R$ ${total.toFixed(2)}. Mensagem: ${recado}`;
 
-        // Abre na mesma aba para evitar problemas de pop-up se desejar, 
-        // ou use _blank mas garanta que o fluxo foi concluído.
-        window.location.href = `https://wa.me/55999810295?text=${encodeURIComponent(mensagem)}`;
+        window.location.href = `https://wa.me/${chavePix}?text=${encodeURIComponent(mensagem)}`;
     };
 
     if (etapa === 1) {
@@ -123,12 +149,14 @@ export default function CartModal({ itens, onClose, onUpdateCart }) {
                 <p style={{ textAlign: 'center' }}>Total: <strong>R$ {total.toFixed(2)}</strong></p>
 
                 <p style={{ textAlign: 'center', fontSize: '14px', marginBottom: '5px' }}>1. Pague via Pix:</p>
-                {/* Verifique se o nome da imagem está correto no seu projeto */}
                 <QRCodeImg src="/pix-qrcode.jpeg" alt="QR Code Pix" />
 
-                <div style={{ background: '#eee', padding: '10px', borderRadius: '10px', textAlign: 'center', fontSize: '12px' }}>
-                    Chave: 55999810295 (Célular)
-                </div>
+                {/* Área da Chave Pix com função de copiar */}
+                <PixKeyContainer onClick={handleCopyPix} title="Clique para copiar">
+                    <span style={{ color: '#666', fontSize: '12px' }}>Chave Pix (Celular):</span><br />
+                    <strong style={{ fontSize: '16px' }}>{chavePix}</strong><br />
+                    <small style={{ color: '#A57C4B', fontWeight: 'bold' }}>(Clique para copiar)</small>
+                </PixKeyContainer>
 
                 <Input placeholder="Seu nome" value={nome} onChange={e => setNome(e.target.value)} />
                 <TextArea placeholder="Recado final..." value={recado} onChange={e => setRecado(e.target.value)} />
